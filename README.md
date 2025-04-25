@@ -22,6 +22,18 @@ KanbanFlow is a simple, interactive Kanban board application built with Next.js 
     *   **Visual Feedback:** Hover states on interactive elements (buttons, links, task cards) and visual cues during drag-and-drop.
 *   **Styling:**
     *   Clean, modern UI styled with **Tailwind CSS**.
+
+
+## Web Experience Overview
+
+
+
+
+https://github.com/user-attachments/assets/b16d8f5b-3ba1-4ef4-b4e3-214f242df165
+
+
+
+
     
 
 ## Thought Process & Design Decisions
