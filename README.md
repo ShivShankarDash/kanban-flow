@@ -44,7 +44,7 @@ https://github.com/user-attachments/assets/b16d8f5b-3ba1-4ef4-b4e3-214f242df165
 
 3.  **State Management (React Hooks):** For this application's current scope, React's built-in hooks (`useState`, `useEffect`) are sufficient for managing the state of boards, tasks, selected items, and UI states like modal visibility. This avoids the overhead of larger state management libraries for now. State is primarily managed in the main `page.tsx` and passed down as props.
 
-4.  **API Design (Placeholder):** Next.js API routes (`src/app/api/[[...route]]/route.ts`) are used as placeholders for the backend. This allows for easy integration within the Next.js application structure. The current implementation includes basic routing logic but needs actual database interaction logic (connecting to PostgreSQL via an ORM) to be fully functional.
+4.  **API Design (Placeholder):** Next.js API routes (`src/app/api/[[...route]]/route.ts`) are used as placeholders for the backend. This allows for easy integration within the Next.js application structure.
 
 5.  **Styling (Tailwind CSS & Custom Theme):** Tailwind CSS is used for utility-first styling, enabling rapid UI development and ensuring consistency. A custom theme is defined in `globals.css` using HSL CSS variables, allowing easy modification of the color scheme (background, foreground, primary, accent, etc.) to match the design requirements.
 
