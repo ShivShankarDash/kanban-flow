@@ -1,103 +1,243 @@
-import Image from "next/image";
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Plus } from "lucide-react";
+import BoardList from "@/components/BoardList";
+import Modal from "@/components/custom/Modal";
+import BoardForm from "@/components/BoardForm";
+import Button from "@/components/custom/Button";
+import type { Board, Task, Column } from "@/types";
+
+// Sample Data (replace with API call in useEffect)
+const initialBoards: Board[] = [
+  {
+    id: "board-1",
+    title: "Project Phoenix",
+    columns: [
+      { id: "col-1-1", title: "To Do", boardId: "board-1" },
+      { id: "col-1-2", title: "In Progress", boardId: "board-1" },
+      { id: "col-1-3", title: "Done", boardId: "board-1" },
+    ],
+  },
+  {
+    id: "board-2",
+    title: "Marketing Campaign",
+    columns: [
+      { id: "col-2-1", title: "Ideas", boardId: "board-2" },
+      { id: "col-2-2", title: "Planning", boardId: "board-2" },
+      { id: "col-2-3", title: "Execution", boardId: "board-2" },
+      { id: "col-2-4", title: "Review", boardId: "board-2" },
+    ],
+  },
+];
+
+const initialTasks: Task[] = [
+  { id: "task-1", title: "Setup project structure", description: "Initialize repo, install dependencies", status: "col-1-1", boardId: "board-1" },
+  { id: "task-2", title: "Design UI mockups", description: "Create Figma designs", status: "col-1-1", boardId: "board-1" },
+  { id: "task-3", title: "Develop API endpoints", description: "Implement CRUD for boards and tasks", status: "col-1-2", boardId: "board-1" },
+  { id: "task-4", title: "Write unit tests", description: "Cover critical API functions", status: "col-1-3", boardId: "board-1" },
+  { id: "task-5", title: "Brainstorm campaign slogans", description: "", status: "col-2-1", boardId: "board-2" },
+  { id: "task-6", title: "Create content calendar", description: "Plan posts for next month", status: "col-2-2", boardId: "board-2" },
+];
+
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [boards, setBoards] = useState<Board[]>(initialBoards); // Initialize with sample data
+  const [tasks, setTasks] = useState<Task[]>(initialTasks); // Initialize with sample data
+  const [selectedBoard, setSelectedBoard] = useState<Board | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<"addBoard" | "editBoard">("addBoard");
+  const [boardToEdit, setBoardToEdit] = useState<Board | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  // TODO: Replace with API calls in useEffect
+  useEffect(() => {
+    // Fetch boards and tasks from API
+    // fetch('/api/boards').then(res => res.json()).then(data => setBoards(data));
+    // fetch('/api/tasks').then(res => res.json()).then(data => setTasks(data));
+    if (boards.length > 0 && !selectedBoard) {
+      setSelectedBoard(boards[0]); // Select the first board by default
+    }
+  }, [boards, selectedBoard]); // Re-run if boards change or no board is selected
+
+  const handleAddBoard = (newBoardData: Omit<Board, "id" | "columns"> & { columns: Omit<Column, "id" | "boardId">[] }) => {
+    const newBoard: Board = {
+      ...newBoardData,
+      id: `board-${Date.now()}`, // Temporary ID generation
+      columns: newBoardData.columns.map((col, index) => ({
+        ...col,
+        id: `col-${Date.now()}-${index}`,
+        boardId: `board-${Date.now()}` // Needs the actual new board ID
+      })),
+    };
+    newBoard.columns.forEach(col => col.boardId = newBoard.id); // Correctly assign boardId after board creation
+
+    // TODO: API Call POST /api/boards
+    console.log("Adding board:", newBoard);
+    setBoards((prevBoards) => [...prevBoards, newBoard]);
+    setSelectedBoard(newBoard); // Select the newly added board
+    setIsModalOpen(false);
+  };
+
+
+  const handleEditBoard = (updatedBoardData: Board) => {
+    // TODO: API Call PUT /api/boards/:id
+    console.log("Updating board:", updatedBoardData);
+    setBoards((prevBoards) =>
+      prevBoards.map((board) =>
+        board.id === updatedBoardData.id ? updatedBoardData : board
+      )
+    );
+    // If the currently selected board is the one being edited, update it
+    if (selectedBoard?.id === updatedBoardData.id) {
+      setSelectedBoard(updatedBoardData);
+    }
+    setIsModalOpen(false);
+    setBoardToEdit(null);
+  };
+
+  const handleDeleteBoard = (boardId: string) => {
+    if (window.confirm("Are you sure you want to delete this board and all its tasks?")) {
+      // TODO: API Call DELETE /api/boards/:id
+      console.log("Deleting board:", boardId);
+      setBoards((prevBoards) => prevBoards.filter((board) => board.id !== boardId));
+      // TODO: API Call DELETE /api/tasks?boardId=boardId
+      setTasks((prevTasks) => prevTasks.filter((task) => task.boardId !== boardId));
+      // If the deleted board was selected, select the first available board or null
+      if (selectedBoard?.id === boardId) {
+        setSelectedBoard(boards.length > 1 ? boards.find(b => b.id !== boardId) ?? boards[0] : null);
+      }
+    }
+  };
+
+  const openAddBoardModal = () => {
+    setModalMode("addBoard");
+    setBoardToEdit(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditBoardModal = (board: Board) => {
+    setModalMode("editBoard");
+    setBoardToEdit(board);
+    setIsModalOpen(true);
+  };
+
+  // Task Handlers (Placeholder - to be implemented in Board component)
+   const handleAddTask = (newTaskData: Omit<Task, "id">) => {
+    const newTask: Task = {
+      ...newTaskData,
+      id: `task-${Date.now()}`, // Temporary ID generation
+    };
+    // TODO: API Call POST /api/tasks
+    console.log("Adding task:", newTask);
+    setTasks((prevTasks) => [...prevTasks, newTask]);
+   };
+
+  const handleEditTask = (updatedTaskData: Task) => {
+    // TODO: API Call PUT /api/tasks/:id
+    console.log("Updating task:", updatedTaskData);
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === updatedTaskData.id ? updatedTaskData : task
+      )
+    );
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+     if (window.confirm("Are you sure you want to delete this task?")) {
+       // TODO: API Call DELETE /api/tasks/:id
+       console.log("Deleting task:", taskId);
+       setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+     }
+   };
+
+   const handleTaskDragEnd = (result: any) => {
+       if (!result.destination) return; // Dropped outside a list
+
+       const { source, destination, draggableId } = result;
+
+       if (source.droppableId === destination.droppableId && source.index === destination.index) {
+           return; // Dropped in the same place
+       }
+
+       // Update task status locally
+       const updatedTasks = tasks.map(task => {
+           if (task.id === draggableId) {
+               return { ...task, status: destination.droppableId };
+           }
+           return task;
+       });
+
+       setTasks(updatedTasks);
+
+       // TODO: API Call PUT /api/tasks/:draggableId/status
+       // Body: { newStatus: destination.droppableId, boardId: selectedBoard?.id }
+       // Optionally reorder tasks within the column if needed on the backend
+       console.log(`Task ${draggableId} moved from ${source.droppableId} to ${destination.droppableId}`);
+   };
+
+
+  return (
+    <div className="flex h-[calc(100vh-4rem)]"> {/* Adjust height to account for header */}
+      {/* Sidebar for Boards */}
+      <aside className="w-64 bg-card border-r border-border p-4 flex flex-col">
+        <h2 className="text-xs font-semibold tracking-widest uppercase text-muted-foreground mb-4">
+          All Boards ({boards.length})
+        </h2>
+        <nav className="flex-grow mb-4 overflow-y-auto">
+          <ul>
+            {boards.map((board) => (
+              <li key={board.id} className="mb-1">
+                <Button
+                  variant={selectedBoard?.id === board.id ? "primary" : "ghost"}
+                  className={`w-full justify-start text-left px-3 py-2 rounded-md ${
+                    selectedBoard?.id === board.id
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-accent/10 hover:text-primary'
+                  }`}
+                  onClick={() => setSelectedBoard(board)}
+                >
+                  {board.title}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <Button variant="primary" onClick={openAddBoardModal} className="w-full">
+          <Plus className="mr-2 h-4 w-4" /> Create New Board
+        </Button>
+      </aside>
+
+      {/* Main Content Area for Selected Board */}
+      <section className="flex-1 overflow-x-auto p-6 bg-background">
+        {selectedBoard ? (
+           <BoardList
+              board={selectedBoard}
+              tasks={tasks.filter(task => task.boardId === selectedBoard.id)}
+              onEditBoard={() => openEditBoardModal(selectedBoard)}
+              onDeleteBoard={handleDeleteBoard}
+              onAddTask={handleAddTask}
+              onEditTask={handleEditTask}
+              onDeleteTask={handleDeleteTask}
+              onTaskDragEnd={handleTaskDragEnd}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-muted-foreground text-lg">
+              Select a board or create a new one to get started.
+            </p>
+          </div>
+        )}
+      </section>
+
+      {/* Add/Edit Board Modal */}
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <BoardForm
+          onSubmit={modalMode === 'addBoard' ? handleAddBoard : (data) => handleEditBoard(data as Board)}
+          initialData={boardToEdit} // Pass null for add mode, board data for edit mode
+          onCancel={() => setIsModalOpen(false)}
+          mode={modalMode}
+        />
+      </Modal>
     </div>
   );
 }
